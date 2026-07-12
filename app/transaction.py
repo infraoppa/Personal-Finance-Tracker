@@ -4,7 +4,8 @@ from datetime import date
 def add_transaction(amount,category,description,transaction_date):
     conn = get_connection()
     cursor = conn.cursor()
-    transaction_date = date.isoformat()
+    amount = str(amount)
+    transaction_date = transaction_date.isoformat()
     cursor.execute("""
     INSERT INTO transactions(
     amount, category, description, transaction_date) VALUES (?,?,?,?)"""

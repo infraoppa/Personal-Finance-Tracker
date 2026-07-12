@@ -2,10 +2,9 @@ from app.config import APP_TITLE
 from app.database import create_tables
 from app.transaction import add_transaction, get_transaction, get_transactions
 from app.schemas import TransactionCreate
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
-from datetime import date
-from decimal import Decimal
+
 
 
 @asynccontextmanager
@@ -32,4 +31,18 @@ def insert_transaction(transaction: TransactionCreate):
         "new_id": new_id,
         "added": transaction
     }
+
+@app.get("/transactions")
+def get_all_transactions():
+    transactions = get_transactions()
+    return transactions
     
+@app.get("/transactions/{transaction_id}")
+def get_transaction_by_id(transaction_id:int):
+    transaction = get_transaction(transaction_id)
+    if transaction is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Transaction Not Found"
+        )
+    return {"transaction": transaction}
