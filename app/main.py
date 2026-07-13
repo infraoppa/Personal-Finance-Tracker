@@ -1,6 +1,6 @@
 from app.config import APP_TITLE
 from app.database import create_tables
-from app.transaction import add_transaction, get_transaction, get_transactions
+from app.transaction import add_transaction, get_transaction, get_transactions, update_transaction, delete_transaction
 from app.schemas import TransactionCreate
 from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
@@ -46,3 +46,30 @@ def get_transaction_by_id(transaction_id:int):
             detail="Transaction Not Found"
         )
     return {"transaction": transaction}
+
+@app.put("/transactions/{transaction_id}")
+def update_transaction_by_id(transaction_id:int, transaction: TransactionCreate):
+    updated = update_transaction(transaction_id,transaction.amount,transaction.category,transaction.description,transaction.transaction_date)
+    if not updated:
+        raise HTTPException(
+            status_code= 404,
+            detail="Transaction not found"
+        )
+    return {"updated": get_transaction(transaction_id)}
+
+
+@app.delete("/transactions/{transaction_id}")
+def delete_transaction_by_id(transaction_id:int):
+    transaction = get_transaction(transaction_id)
+    if transaction is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Transaction not found"
+        )
+    deleted = delete_transaction(transaction_id)
+    if not deleted:
+        raise HTTPException(
+            status_code=404,
+            detail="Transaction not found"
+        )
+    return {"deleted":transaction}
