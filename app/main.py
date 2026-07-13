@@ -1,11 +1,15 @@
-from app.config import APP_TITLE
+from app.config import APP_TITLE, BASE_DIR
 from app.database import create_tables
 from app.transaction import add_transaction, get_transaction, get_transactions, update_transaction, delete_transaction
 from app.schemas import TransactionCreate
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from contextlib import asynccontextmanager
 
-
+templates = Jinja2Templates(
+    directory=BASE_DIR/"app"/"templates"
+)
 
 @asynccontextmanager
 async def lifespan(app:FastAPI):
@@ -73,3 +77,15 @@ def delete_transaction_by_id(transaction_id:int):
             detail="Transaction not found"
         )
     return {"deleted":transaction}
+
+@app.get("/dashboard",response_class=HTMLResponse)
+def get_dashboard(request:Request):
+    transactions = get_transactions()
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={
+            "app_title": APP_TITLE,
+            "transactions": transactions
+        }
+    )
