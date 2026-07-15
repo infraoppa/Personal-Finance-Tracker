@@ -1,12 +1,80 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>{{app_title}}</title>
+        <title>{{ app_title }}</title>
     </head>
 
     <body>
-        <h1>{{app_title}}</h1>
-        <h2>{{transactions}}</h2>
-        <p>Dashboard is working</p>
+        <h1>{{ app_title }}</h1>
+
+        <h2>Add Transaction</h2>
+
+        <form action="/transactions/form" method="post">
+            <div>
+                <label for="amount">Amount</label>
+                <input
+                    type="number"
+                    id="amount"
+                    name="amount"
+                    step="0.01"
+                    min="0.01"
+                    required
+                >
+            </div>
+
+            <div>
+                <label for="category">Category</label>
+                <input
+                    type="text"
+                    id="category"
+                    name="category"
+                    required
+                >
+            </div>
+
+            <div>
+                <label for="description">Description</label>
+                <input
+                    type="text"
+                    id="description"
+                    name="description"
+                    required
+                >
+            </div>
+
+            <div>
+                <label for="transaction_date">Transaction Date</label>
+                <input
+                    type="date"
+                    id="transaction_date"
+                    name="transaction_date"
+                    required
+                >
+            </div>
+
+            <button type="submit">Add Transaction</button>
+        </form>
+
+        <h2>Recent Transactions</h2>
+
+        {% for transaction in transactions %}
+            <div>
+                <p>
+                    ${{ transaction.amount }} -
+                    {{ transaction.category }} -
+                    {{ transaction.description }} -
+                    {{ transaction.transaction_date }}
+                </p>
+
+                <form
+                    action="/transactions/{{ transaction.id }}/delete"
+                    method="post"
+                >
+                    <button type="submit">Delete</button>
+                </form>
+            </div>
+        {% else %}
+            <p>No Transactions Yet</p>
+        {% endfor %}
     </body>
 </html>

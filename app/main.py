@@ -2,10 +2,13 @@ from app.config import APP_TITLE, BASE_DIR
 from app.database import create_tables
 from app.transaction import add_transaction, get_transaction, get_transactions, update_transaction, delete_transaction
 from app.schemas import TransactionCreate
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, HTTPException, Request, Form
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from contextlib import asynccontextmanager
+from datetime import date
+from decimal import Decimal
+
 
 templates = Jinja2Templates(
     directory=BASE_DIR/"app"/"templates"
@@ -89,3 +92,32 @@ def get_dashboard(request:Request):
             "transactions": transactions
         }
     )
+
+@app.post("/transactions/form")
+def insert_form_transaction(
+    amount : Decimal = Form(...),
+    category: str = Form(...),
+    description: str = Form(...),
+    transaction_date: date = Form(...)
+):
+    add_transaction(amount=amount,category=category,description=description,transaction_date=transaction_date)
+    return RedirectResponse(
+        url="/dashboard",
+        status_code=303
+    )
+
+@app.post("/transactions/{transaction_id}/delete")
+def delete_form_transaction(transaction_id: int):
+    deleted = delete_transaction(transaction_id)
+
+    if not deleted:
+        raise HTTPException(
+            status_code=404,
+            detail="Transaction not found"
+        )
+
+    return RedirectResponse(
+        url="/dashboard",
+        status_code=303
+    )
+    
