@@ -136,3 +136,22 @@ def edit_transaction_form(transaction_id:int,request:Request):
             "transaction":transaction
         }
     )
+
+@app.post("/transactions/{transaction_id}/edit")
+def post_edit_transaction_form(
+    transaction_id:int,
+    amount:Decimal = Form(...),
+    category:str = Form(...),
+    description:str = Form(...),
+    transaction_date:date = Form(...)
+):
+    updated = update_transaction(transaction_id=transaction_id,amount=amount,category=category,description=description,transaction_date=transaction_date)
+    if not updated:
+        raise HTTPException(
+            status_code=404,
+            detail="Transaction not found"
+        )
+    return RedirectResponse(
+        url="/dashboard",
+        status_code=303
+    )
