@@ -121,3 +121,18 @@ def delete_form_transaction(transaction_id: int):
         status_code=303
     )
     
+@app.get("/transactions/{transaction_id}/edit",response_class=HTMLResponse)
+def edit_transaction_form(transaction_id:int,request:Request):
+    transaction = get_transaction(transaction_id)
+    if not transaction:
+        raise HTTPException(
+            status_code=404,
+            detail="Transaction not found"
+        )
+    return templates.TemplateResponse(
+        request=request,
+        name="edit_transaction.html",
+        context={
+            "transaction":transaction
+        }
+    )
