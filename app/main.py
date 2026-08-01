@@ -2,9 +2,12 @@ from app.config import APP_TITLE, BASE_DIR
 from app.database import create_tables
 from app.transaction import add_transaction, get_transaction, get_transactions, update_transaction, delete_transaction
 from app.schemas import TransactionCreate
-from fastapi import FastAPI, HTTPException, Request, Form
+from fastapi import FastAPI, HTTPException, Request, Form, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from sqlalchemy.orm import Session
+from app.postgres_database import get_db
+from app.postgres_transaction import create_transaction
 from contextlib import asynccontextmanager
 from datetime import date
 from decimal import Decimal
@@ -155,3 +158,23 @@ def post_edit_transaction_form(
         url="/dashboard",
         status_code=303
     )
+
+
+@app.post("/test-postgres-transaction")
+def create_test_transaction(db: Session = Depends(get_db)):
+    transaction = create_transaction(
+        db=db,
+        amount=Decimal("15.75"),
+        category="Food",
+        description="Dependency Injection Test",
+        transaction_date=date.today()
+    )
+
+    return {
+        "id": transaction.id,
+        "amount": transaction.amount,
+        "category": transaction.category,
+        "description": transaction.description,
+        "created_at": transaction.created_at
+    }
+                            
