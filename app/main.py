@@ -1,7 +1,7 @@
 from app.config import APP_TITLE, BASE_DIR
 from app.database import create_tables
 from app.transaction import add_transaction, get_transaction, get_transactions, update_transaction, delete_transaction
-from app.schemas import TransactionCreate
+from app.schemas import TransactionCreate,TransactionResponse
 from fastapi import FastAPI, HTTPException, Request, Form, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -160,21 +160,7 @@ def post_edit_transaction_form(
     )
 
 
-@app.post("/test-postgres-transaction")
-def create_test_transaction(db: Session = Depends(get_db)):
-    transaction = create_transaction(
-        db=db,
-        amount=Decimal("15.75"),
-        category="Food",
-        description="Dependency Injection Test",
-        transaction_date=date.today()
-    )
-
-    return {
-        "id": transaction.id,
-        "amount": transaction.amount,
-        "category": transaction.category,
-        "description": transaction.description,
-        "created_at": transaction.created_at
-    }
-                            
+@app.post("/test-postgres-transaction",response_model=TransactionResponse)
+def create_test_transaction(transaction:TransactionCreate, db:Session = Depends(get_db)):
+    created = create_transaction(db=db,amount=transaction.amount,description=transaction.description,category=transaction.category,transaction_date=transaction.transaction_date)
+    return created
