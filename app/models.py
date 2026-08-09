@@ -34,3 +34,35 @@ class Transaction(Base):
         server_default=func.now(),
         nullable=False   
     )
+
+class Budget(Base):
+
+    __tablename__ = "budget"
+
+    id:Mapped[int] = mapped_column(
+        primary_key=True
+    )
+    category:Mapped[str] = mapped_column(
+        String(100),
+        nullable=False
+    )
+    amount:Mapped[Decimal] = mapped_column(
+        Numeric(10,2),
+        nullable=False
+    )
+    month:Mapped[int] = mapped_column(
+        nullable=False
+    )
+    year:Mapped[int] = mapped_column(
+        nullable=False
+    )
+
+    alert_threshold:Mapped[int] = mapped_column(
+        nullable=False
+    )
+
+    created_at:Mapped[datetime] = mapped_column(
+        DateTime,
+        server_default=func.now(),
+        nullable=False
+    )

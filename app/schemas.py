@@ -16,3 +16,20 @@ class TransactionResponse(BaseModel):
     description:str
     transaction_date:date
     created_at:datetime
+
+class BudgetCreate(BaseModel):
+    category:str
+    amount:Decimal
+    month:int
+    year:int
+    alert_theshold:int
+
+class BudgetResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id:int
+    category:str
+    amount:Decimal
+    month:int
+    year:int
+    alert_threshold:int
+    created_at:datetime
