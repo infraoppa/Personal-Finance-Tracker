@@ -1,14 +1,11 @@
 from app.config import APP_TITLE, BASE_DIR
-from app.database import create_tables
-from app.transaction import add_transaction, get_transaction, get_transactions, update_transaction, delete_transaction
 from app.schemas import TransactionCreate,TransactionResponse
 from fastapi import FastAPI, HTTPException, Request, Form, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.postgres_database import get_db
-from app.postgres_transaction import create_transaction
-from contextlib import asynccontextmanager
+from app.postgres_transaction import post_transaction,select_transactions,select_transactions_by_id,update_trans,delete_trans
 from datetime import date
 from decimal import Decimal
 
@@ -17,14 +14,8 @@ templates = Jinja2Templates(
     directory=BASE_DIR/"app"/"templates"
 )
 
-@asynccontextmanager
-async def lifespan(app:FastAPI):
-    create_tables()
-    yield
-
 app = FastAPI(
-    title= APP_TITLE,
-    lifespan=lifespan)
+    title= APP_TITLE)
 
 @app.get("/")
 def read_root():
@@ -34,59 +25,51 @@ def read_root():
 def get_health():
     return {"status": "healthy"}
 
-@app.post("/transactions")
-def insert_transaction(transaction: TransactionCreate):
-    new_id = add_transaction(amount=transaction.amount,category=transaction.category,description=transaction.description,transaction_date=transaction.transaction_date)
-    return {
-        "new_id": new_id,
-        "added": transaction
-    }
 
-@app.get("/transactions")
-def get_all_transactions():
-    transactions = get_transactions()
+@app.post("/transactions",response_model=TransactionResponse)
+def create_transaction(transaction:TransactionCreate, db:Session = Depends(get_db)):
+    created = post_transaction(db=db,amount=transaction.amount,description=transaction.description,category=transaction.category,transaction_date=transaction.transaction_date)
+    return created
+
+
+@app.get("/transactions", response_model=list[TransactionResponse])
+def get_all_transactions(db:Session=Depends(get_db)):
+    transactions = select_transactions(db)
     return transactions
-    
-@app.get("/transactions/{transaction_id}")
-def get_transaction_by_id(transaction_id:int):
-    transaction = get_transaction(transaction_id)
-    if transaction is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Transaction Not Found"
-        )
-    return {"transaction": transaction}
 
-@app.put("/transactions/{transaction_id}")
-def update_transaction_by_id(transaction_id:int, transaction: TransactionCreate):
-    updated = update_transaction(transaction_id,transaction.amount,transaction.category,transaction.description,transaction.transaction_date)
-    if not updated:
-        raise HTTPException(
-            status_code= 404,
-            detail="Transaction not found"
-        )
-    return {"updated": get_transaction(transaction_id)}
-
-
-@app.delete("/transactions/{transaction_id}")
-def delete_transaction_by_id(transaction_id:int):
-    transaction = get_transaction(transaction_id)
+@app.get("/transactions/{transaction_id}",response_model=TransactionResponse)
+def get_transaction_by_id(transaction_id:int,db:Session=Depends(get_db)):
+    transaction = select_transactions_by_id(db,transaction_id)
     if transaction is None:
         raise HTTPException(
             status_code=404,
             detail="Transaction not found"
         )
-    deleted = delete_transaction(transaction_id)
-    if not deleted:
+    return transaction
+
+@app.put("/transactions/{transaction_id}",response_model=TransactionResponse)
+def update_transaction(transaction_id:int,transaction:TransactionCreate,db:Session=Depends(get_db)):
+    updated = update_trans(db,transaction_id,amount=transaction.amount,category=transaction.category,description=transaction.description,transaction_date=transaction.transaction_date)
+    if updated is None:
         raise HTTPException(
             status_code=404,
             detail="Transaction not found"
         )
-    return {"deleted":transaction}
+    return updated
+
+@app.delete("/transactions/{transaction_id}", response_model=TransactionResponse)
+def delete_transaction(transaction_id:int,db:Session=Depends(get_db)):
+    deleted = delete_trans(db,transaction_id)
+    if deleted is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Transaction not found"
+        )
+    return deleted
 
 @app.get("/dashboard",response_class=HTMLResponse)
-def get_dashboard(request:Request):
-    transactions = get_transactions()
+def get_dashboard(request:Request,db:Session=Depends(get_db)):
+    transactions = select_transactions(db)
     return templates.TemplateResponse(
         request=request,
         name="index.html",
@@ -101,17 +84,18 @@ def insert_form_transaction(
     amount : Decimal = Form(...),
     category: str = Form(...),
     description: str = Form(...),
-    transaction_date: date = Form(...)
+    transaction_date: date = Form(...),
+    db:Session=Depends(get_db)
 ):
-    add_transaction(amount=amount,category=category,description=description,transaction_date=transaction_date)
+    post_transaction(db,amount=amount,category=category,description=description,transaction_date=transaction_date)
     return RedirectResponse(
         url="/dashboard",
         status_code=303
     )
 
 @app.post("/transactions/{transaction_id}/delete")
-def delete_form_transaction(transaction_id: int):
-    deleted = delete_transaction(transaction_id)
+def delete_form_transaction(transaction_id: int, db:Session=Depends(get_db)):
+    deleted = delete_trans(db,transaction_id)
 
     if not deleted:
         raise HTTPException(
@@ -125,8 +109,8 @@ def delete_form_transaction(transaction_id: int):
     )
     
 @app.get("/transactions/{transaction_id}/edit",response_class=HTMLResponse)
-def edit_transaction_form(transaction_id:int,request:Request):
-    transaction = get_transaction(transaction_id)
+def edit_transaction_form(transaction_id:int,request:Request,db:Session=Depends(get_db)):
+    transaction = select_transactions_by_id(db,transaction_id)
     if not transaction:
         raise HTTPException(
             status_code=404,
@@ -146,9 +130,10 @@ def post_edit_transaction_form(
     amount:Decimal = Form(...),
     category:str = Form(...),
     description:str = Form(...),
-    transaction_date:date = Form(...)
+    transaction_date:date = Form(...),
+    db:Session=Depends(get_db)
 ):
-    updated = update_transaction(transaction_id=transaction_id,amount=amount,category=category,description=description,transaction_date=transaction_date)
+    updated = update_trans(db,transaction_id=transaction_id,amount=amount,category=category,description=description,transaction_date=transaction_date)
     if not updated:
         raise HTTPException(
             status_code=404,
@@ -159,8 +144,3 @@ def post_edit_transaction_form(
         status_code=303
     )
 
-
-@app.post("/test-postgres-transaction",response_model=TransactionResponse)
-def create_test_transaction(transaction:TransactionCreate, db:Session = Depends(get_db)):
-    created = create_transaction(db=db,amount=transaction.amount,description=transaction.description,category=transaction.category,transaction_date=transaction.transaction_date)
-    return created
