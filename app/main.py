@@ -1,11 +1,12 @@
 from app.config import APP_TITLE, BASE_DIR
-from app.schemas import TransactionCreate,TransactionResponse
+from app.schemas import TransactionCreate,TransactionResponse,BudgetCreate,BudgetResponse,BudgetStatusResponse
 from fastapi import FastAPI, HTTPException, Request, Form, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.postgres_database import get_db
 from app.postgres_transaction import post_transaction,select_transactions,select_transactions_by_id,update_trans,delete_trans
+from app.postgres_budget import create_budget,select_budgets,get_category_spending,get_budget_status
 from datetime import date
 from decimal import Decimal
 
@@ -25,6 +26,7 @@ def read_root():
 def get_health():
     return {"status": "healthy"}
 
+## Backend Transactions
 
 @app.post("/transactions",response_model=TransactionResponse)
 def create_transaction(transaction:TransactionCreate, db:Session = Depends(get_db)):
@@ -66,6 +68,40 @@ def delete_transaction(transaction_id:int,db:Session=Depends(get_db)):
             detail="Transaction not found"
         )
     return deleted
+
+# Backend Budgets
+
+@app.post("/budgets",response_model=BudgetResponse)
+def add_budget(budget:BudgetCreate,db:Session=Depends(get_db)):
+    budget = create_budget(db,category=budget.category,amount=budget.amount,month=budget.month,year=budget.year,alert_threshold=budget.alert_threshold)
+    return budget
+
+@app.get("/budgets",response_model=list[BudgetResponse])
+def get_budgets(db:Session=Depends(get_db)):
+    budgets = select_budgets(db)
+    return budgets
+
+@app.get("/budgets/spending/{category}")
+def get_spent_by_category(category:str,month:int,year:int,db:Session=Depends(get_db)):
+    spent = get_category_spending(db,category,month,year)
+    return {
+        "category": category,
+        "month": month,
+        "year": year,
+        "spent": spent
+    }
+
+@app.get("/budgets/status",response_model=BudgetStatusResponse)
+def get_current_budget_status(category: str,month: int,year: int,db: Session = Depends(get_db)):
+    status = get_budget_status(db=db,category=category,month=month,year=year)
+    if status is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Budget not found"
+        )
+    return status
+
+#Front end form 
 
 @app.get("/dashboard",response_class=HTMLResponse)
 def get_dashboard(request:Request,db:Session=Depends(get_db)):
