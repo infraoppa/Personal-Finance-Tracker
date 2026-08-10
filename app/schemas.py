@@ -32,4 +32,13 @@ class BudgetResponse(BaseModel):
     month:int
     year:int
     alert_threshold:int
-    created_at:datetime
+    created_on:datetime
+
+class BudgetStatusResponse(BaseModel):
+    category:str
+    budget:Decimal
+    spent:Decimal
+    remaining:Decimal
+    percentage_used:Decimal
+    alert_threshold:int
+    threshold_reached:bool
