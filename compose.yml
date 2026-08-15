@@ -19,6 +19,17 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+  
+  app:
+    image: finance-app:1
+    ports:
+    - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+psycopg://finance_user:finance_password@db:5432/finance
+
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   postgres_data:
