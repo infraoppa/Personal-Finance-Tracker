@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Edit budget &middot; {{ app_title }}{% endblock %}
+
+{% block content %}
+
+    <div class="form-page">
+
+        <div class="page-title">
+            <h1>Edit budget</h1>
+            <p>Update the {{ budget.category }} budget.</p>
+        </div>
+
+        <section class="card">
+
+            <form
+                action="/budgets/{{ budget.id }}/edit"
+                method="post"
+                class="form-grid"
+            >
+
+                <div class="field">
+                    <label for="category">Category</label>
+
+                    <input
+                        type="text"
+                        id="category"
+                        name="category"
+                        value="{{ budget.category }}"
+                        required
+                    >
+                </div>
+
+
+                <div class="field">
+                    <label for="amount">Budget amount</label>
+
+                    <input
+                        type="number"
+                        id="amount"
+                        name="amount"
+                        step="0.01"
+                        min="0.01"
+                        value="{{ budget.amount }}"
+                        required
+                    >
+                </div>
+
+
+                <div class="field-row">
+
+                    <div class="field">
+                        <label for="month">Month</label>
+
+                        <input
+                            type="number"
+                            id="month"
+                            name="month"
+                            min="1"
+                            max="12"
+                            value="{{ budget.month }}"
+                            required
+                        >
+                    </div>
+
+                    <div class="field">
+                        <label for="year">Year</label>
+
+                        <input
+                            type="number"
+                            id="year"
+                            name="year"
+                            min="2000"
+                            value="{{ budget.year }}"
+                            required
+                        >
+                    </div>
+
+                </div>
+
+
+                <div class="field">
+                    <label for="alert_threshold">
+                        Alert threshold %
+                    </label>
+
+                    <input
+                        type="number"
+                        id="alert_threshold"
+                        name="alert_threshold"
+                        min="1"
+                        max="100"
+                        value="{{ budget.alert_threshold }}"
+                        required
+                    >
+                </div>
+
+
+                <button type="submit" class="btn">
+                    Save changes
+                </button>
+
+            </form>
+
+
+            <div class="form-foot">
+
+                <a class="btn-ghost" href="/dashboard">
+                    <svg class="icon"><use href="#i-back"/></svg>
+                    Back to dashboard
+                </a>
+
+            </div>
+
+        </section>
+
+    </div>
+
+{% endblock %}

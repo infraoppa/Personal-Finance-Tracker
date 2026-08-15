@@ -1,0 +1,996 @@
+/* =========================================================
+   Personal Finance Tracker
+
+   Colour tokens are defined once as custom properties and
+   referenced by ROLE everywhere below, so light/dark swap
+   in a single place.
+
+   Every foreground/background pair used here was checked
+   for WCAG contrast against the surface it actually renders
+   on. Notable results (light / dark):
+     ink on card ................ 19.17 / 17.42
+     secondary ink on card ......  7.73 /  9.72
+     button label on button .....  5.39 /  5.41
+     link text on card ..........  5.26 /  4.79
+     meter fill vs its track ....  3.34 /  3.84
+   Status hues never carry meaning alone - every state also
+   ships an icon and a text label.
+   ========================================================= */
+
+:root {
+    color-scheme: light;
+
+    --page: #f9f9f7;
+    --surface: #fcfcfb;
+    --surface-2: #f2f2ef;
+
+    --ink: #0b0b0b;
+    --ink-2: #52514e;
+    --ink-muted: #898781;
+
+    --hairline: #e1e0d9;
+    --border: rgba(11, 11, 11, 0.10);
+
+    /* Blue ramp: marks use step 450, text/buttons step 500
+       (step 450 as text is 4.30:1 - just under the 4.5 gate). */
+    --accent: #2a78d6;
+    --accent-text: #256abf;
+    --btn-bg: #256abf;
+    --on-btn: #ffffff;
+
+    --track: #cde2fb;
+
+    --critical: #d03b3b;
+    --critical-track: #fbe3e3;
+    --warning: #fab219;
+    --good: #0ca30c;
+    --good-text: #006300;
+
+    --tint-critical: rgba(208, 59, 59, 0.07);
+    --tint-warning: rgba(250, 178, 25, 0.13);
+    --tint-accent: rgba(42, 120, 214, 0.09);
+
+    --shadow:
+        0 1px 2px rgba(11, 11, 11, 0.04),
+        0 8px 24px rgba(11, 11, 11, 0.06);
+
+    --shadow-lift:
+        0 2px 4px rgba(11, 11, 11, 0.05),
+        0 12px 32px rgba(11, 11, 11, 0.10);
+
+    --radius: 14px;
+    --radius-sm: 9px;
+}
+
+/* Dark steps are chosen for the dark surface, not flipped.
+   Declared under both scopes so the OS setting and an
+   explicit toggle each win in the right direction. */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        color-scheme: dark;
+
+        --page: #0d0d0d;
+        --surface: #1a1a19;
+        --surface-2: #242422;
+
+        --ink: #ffffff;
+        --ink-2: #c3c2b7;
+        --ink-muted: #898781;
+
+        --hairline: #2c2c2a;
+        --border: rgba(255, 255, 255, 0.10);
+
+        --accent: #86b6ef;
+        --accent-text: #3987e5;
+        --btn-bg: #3987e5;
+        --on-btn: #0b0b0b;
+
+        --track: #184f95;
+
+        --critical: #d03b3b;
+        --critical-track: #5c1a1a;
+        --warning: #fab219;
+        --good: #0ca30c;
+        --good-text: #0ca30c;
+
+        --tint-critical: rgba(208, 59, 59, 0.16);
+        --tint-warning: rgba(250, 178, 25, 0.14);
+        --tint-accent: rgba(134, 182, 239, 0.12);
+
+        --shadow:
+            0 1px 2px rgba(0, 0, 0, 0.40),
+            0 8px 24px rgba(0, 0, 0, 0.50);
+
+        --shadow-lift:
+            0 2px 4px rgba(0, 0, 0, 0.45),
+            0 12px 32px rgba(0, 0, 0, 0.60);
+    }
+}
+
+:root[data-theme="dark"] {
+    color-scheme: dark;
+
+    --page: #0d0d0d;
+    --surface: #1a1a19;
+    --surface-2: #242422;
+
+    --ink: #ffffff;
+    --ink-2: #c3c2b7;
+    --ink-muted: #898781;
+
+    --hairline: #2c2c2a;
+    --border: rgba(255, 255, 255, 0.10);
+
+    --accent: #86b6ef;
+    --accent-text: #3987e5;
+    --btn-bg: #3987e5;
+    --on-btn: #0b0b0b;
+
+    --track: #184f95;
+
+    --critical: #d03b3b;
+    --critical-track: #5c1a1a;
+    --warning: #fab219;
+    --good: #0ca30c;
+    --good-text: #0ca30c;
+
+    --tint-critical: rgba(208, 59, 59, 0.16);
+    --tint-warning: rgba(250, 178, 25, 0.14);
+    --tint-accent: rgba(134, 182, 239, 0.12);
+
+    --shadow:
+        0 1px 2px rgba(0, 0, 0, 0.40),
+        0 8px 24px rgba(0, 0, 0, 0.50);
+
+    --shadow-lift:
+        0 2px 4px rgba(0, 0, 0, 0.45),
+        0 12px 32px rgba(0, 0, 0, 0.60);
+}
+
+/* =========================================================
+   Base
+   ========================================================= */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+
+    /* System sans throughout, including the hero figure. */
+    font-family:
+        system-ui,
+        -apple-system,
+        "Segoe UI",
+        sans-serif;
+
+    background: var(--page);
+    color: var(--ink);
+
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+    letter-spacing: -0.015em;
+}
+
+a {
+    color: var(--accent-text);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+:focus-visible {
+    outline: 2px solid var(--accent-text);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.icon {
+    width: 16px;
+    height: 16px;
+
+    flex: none;
+
+    /* Stroke icons inherit the text colour of their context. */
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+
+    margin: -1px;
+    padding: 0;
+
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+/* =========================================================
+   Layout shell
+   ========================================================= */
+
+.shell {
+    width: min(1140px, 92vw);
+    margin: 0 auto;
+}
+
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+
+    background: color-mix(in srgb, var(--page) 88%, transparent);
+
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+
+    border-bottom: 1px solid var(--border);
+}
+
+.topbar .shell {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 16px;
+
+    padding: 14px 0;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    font-size: 15px;
+    font-weight: 700;
+
+    color: var(--ink);
+    text-decoration: none;
+}
+
+.brand:hover {
+    text-decoration: none;
+}
+
+.brand-mark {
+    display: grid;
+    place-items: center;
+
+    width: 30px;
+    height: 30px;
+
+    border-radius: 9px;
+
+    background: var(--tint-accent);
+    color: var(--accent-text);
+}
+
+.brand-mark .icon {
+    width: 17px;
+    height: 17px;
+}
+
+.theme-toggle {
+    display: grid;
+    place-items: center;
+
+    width: 34px;
+    height: 34px;
+    padding: 0;
+
+    border: 1px solid var(--border);
+    border-radius: 9px;
+
+    background: var(--surface);
+    color: var(--ink-2);
+
+    cursor: pointer;
+}
+
+.theme-toggle:hover {
+    color: var(--ink);
+    background: var(--surface-2);
+}
+
+.theme-toggle .icon {
+    width: 17px;
+    height: 17px;
+}
+
+/* Show the moon in light mode (click -> go dark) and the
+   sun in dark mode. Both scopes, matching the tokens. */
+.icon-moon { display: block; }
+.icon-sun { display: none; }
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .icon-moon { display: none; }
+    :root:not([data-theme="light"]) .icon-sun { display: block; }
+}
+
+:root[data-theme="dark"] .icon-moon { display: none; }
+:root[data-theme="dark"] .icon-sun { display: block; }
+:root[data-theme="light"] .icon-moon { display: block; }
+:root[data-theme="light"] .icon-sun { display: none; }
+
+main {
+    padding: 28px 0 64px;
+}
+
+.page-title {
+    margin: 4px 0 26px;
+}
+
+.page-title h1 {
+    margin: 0;
+    font-size: 27px;
+}
+
+.page-title p {
+    margin: 6px 0 0;
+
+    color: var(--ink-2);
+    font-size: 14px;
+}
+
+.section {
+    margin-top: 34px;
+}
+
+.section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+
+    gap: 12px;
+
+    margin-bottom: 14px;
+}
+
+.section-head h2 {
+    margin: 0;
+    font-size: 17px;
+}
+
+.section-head .count {
+    color: var(--ink-muted);
+
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* =========================================================
+   Cards
+   ========================================================= */
+
+.card {
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+
+    padding: 22px;
+
+    box-shadow: var(--shadow);
+}
+
+.card h2 {
+    margin: 0 0 16px;
+    font-size: 17px;
+}
+
+/* =========================================================
+   Overview - hero figure + stat tiles
+
+   Exactly one hero number on the page (the amount left);
+   the tiles carry the supporting values at a smaller size.
+   ========================================================= */
+
+.overview {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    gap: 18px;
+}
+
+.hero-card {
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+
+    padding: 24px;
+
+    box-shadow: var(--shadow);
+
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.stat-label {
+    margin: 0;
+
+    color: var(--ink-2);
+
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.hero-figure {
+    margin: 0;
+
+    /* Proportional figures - tabular-nums would make a
+       standalone number look loose at this size. */
+    font-size: 48px;
+    font-weight: 650;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+}
+
+.hero-figure.is-negative {
+    color: var(--critical);
+}
+
+.hero-sub {
+    margin: 0;
+
+    color: var(--ink-2);
+    font-size: 13px;
+}
+
+.hero-sub strong {
+    color: var(--ink);
+    font-weight: 650;
+}
+
+.tiles {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.tile {
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+
+    padding: 18px;
+
+    box-shadow: var(--shadow);
+
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.tile-head {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+
+    color: var(--ink-2);
+}
+
+.tile-head .icon {
+    width: 15px;
+    height: 15px;
+    color: var(--ink-muted);
+}
+
+.tile-label {
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.tile-value {
+    margin: 0;
+
+    font-size: 25px;
+    font-weight: 650;
+    letter-spacing: -0.02em;
+}
+
+.tile-note {
+    margin: 0;
+
+    color: var(--ink-muted);
+    font-size: 12px;
+}
+
+.tile.is-alert .tile-value {
+    color: var(--critical);
+}
+
+.tile.is-clear .tile-value {
+    color: var(--good-text);
+}
+
+/* =========================================================
+   Meter
+
+   Fill width comes from the --fill custom property set per
+   card in the template. A custom property is used rather
+   than `width:` directly because Jinja inside a bare CSS
+   declaration trips editor CSS validators - custom property
+   values accept arbitrary tokens, so this parses cleanly.
+
+   The track is a step of the fill's own ramp so the state
+   reads across the whole bar, not just the filled part.
+   ========================================================= */
+
+.meter {
+    height: 8px;
+
+    border-radius: 999px;
+
+    background: var(--track);
+
+    overflow: hidden;
+}
+
+.meter-fill {
+    width: var(--fill, 0%);
+    height: 100%;
+
+    border-radius: 999px;
+
+    background: var(--accent);
+
+    transition: width 0.35s ease;
+}
+
+.meter.is-over {
+    background: var(--critical-track);
+}
+
+.meter.is-over .meter-fill {
+    background: var(--critical);
+}
+
+/* =========================================================
+   Budgets
+   ========================================================= */
+
+.budget-grid {
+    display: grid;
+    grid-template-columns: repeat(
+        auto-fill,
+        minmax(310px, 1fr)
+    );
+
+    gap: 18px;
+}
+
+.budget-card {
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+
+    padding: 20px;
+
+    box-shadow: var(--shadow);
+
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+.budget-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lift);
+}
+
+.budget-card p {
+    margin: 0;
+}
+
+.budget-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 10px;
+}
+
+.budget-head h3 {
+    margin: 0;
+    font-size: 15px;
+}
+
+.pct {
+    padding: 3px 9px;
+
+    border-radius: 999px;
+
+    background: var(--surface-2);
+    color: var(--ink-2);
+
+    font-size: 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.budget-card.is-over .pct {
+    background: var(--tint-critical);
+    color: var(--critical);
+}
+
+.budget-amount {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+
+    font-size: 22px;
+    font-weight: 650;
+    letter-spacing: -0.02em;
+}
+
+.budget-amount span {
+    color: var(--ink-2);
+
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.budget-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 10px;
+
+    color: var(--ink-2);
+    font-size: 12.5px;
+}
+
+.budget-foot strong {
+    color: var(--ink);
+    font-weight: 650;
+}
+
+/* Status banner - icon + text, never colour alone. */
+.status-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    padding: 9px 11px;
+
+    border-radius: var(--radius-sm);
+
+    /* Text stays in ink tokens; the icon carries the hue. */
+    color: var(--ink);
+    background: var(--tint-warning);
+
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.status-note .icon {
+    width: 15px;
+    height: 15px;
+    color: var(--warning);
+}
+
+.status-note.is-critical {
+    background: var(--tint-critical);
+}
+
+.status-note.is-critical .icon {
+    color: var(--critical);
+}
+
+/* =========================================================
+   Row actions
+   ========================================================= */
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.budget-card .actions {
+    margin-top: auto;
+    padding-top: 3px;
+}
+
+.actions form {
+    margin: 0;
+    display: flex;
+}
+
+.btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    padding: 6px 11px;
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+
+    background: transparent;
+    color: var(--ink-2);
+
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+.btn-ghost:hover {
+    background: var(--surface-2);
+    color: var(--ink);
+    text-decoration: none;
+}
+
+.btn-ghost.is-danger:hover {
+    background: var(--tint-critical);
+    color: var(--critical);
+}
+
+.btn-ghost .icon {
+    width: 14px;
+    height: 14px;
+}
+
+/* =========================================================
+   Transactions
+   ========================================================= */
+
+.txn-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 14px;
+
+    padding: 13px 0;
+
+    border-bottom: 1px solid var(--hairline);
+}
+
+.txn-row:last-child {
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.txn-main {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    margin: 0 0 3px;
+}
+
+.txn-amount {
+    font-size: 15px;
+    font-weight: 650;
+}
+
+.tag {
+    padding: 2px 8px;
+
+    border-radius: 999px;
+
+    background: var(--surface-2);
+    color: var(--ink-2);
+
+    font-size: 11.5px;
+    font-weight: 600;
+}
+
+.txn-meta {
+    margin: 0;
+
+    color: var(--ink-muted);
+    font-size: 12.5px;
+}
+
+/* =========================================================
+   Forms
+   ========================================================= */
+
+.form-columns {
+    display: grid;
+    grid-template-columns: repeat(
+        auto-fit,
+        minmax(300px, 1fr)
+    );
+
+    gap: 18px;
+}
+
+.form-grid {
+    display: grid;
+    gap: 14px;
+}
+
+.field {
+    display: grid;
+    gap: 6px;
+}
+
+.field-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+label {
+    color: var(--ink-2);
+
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+input {
+    width: 100%;
+
+    padding: 10px 12px;
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+
+    background: var(--page);
+    color: var(--ink);
+
+    font-family: inherit;
+    font-size: 14px;
+}
+
+input::placeholder {
+    color: var(--ink-muted);
+}
+
+input:focus {
+    outline: none;
+
+    border-color: var(--accent-text);
+
+    box-shadow:
+        0 0 0 3px
+        var(--tint-accent);
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+
+    padding: 10px 16px;
+
+    border: none;
+    border-radius: var(--radius-sm);
+
+    background: var(--btn-bg);
+    color: var(--on-btn);
+
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 650;
+
+    cursor: pointer;
+
+    transition: filter 0.15s ease;
+}
+
+.btn:hover {
+    filter: brightness(1.08);
+    text-decoration: none;
+}
+
+.btn .icon {
+    stroke-width: 2.2;
+}
+
+.form-page {
+    width: min(560px, 100%);
+    margin: 0 auto;
+}
+
+.form-foot {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    margin-top: 16px;
+    padding-top: 16px;
+
+    border-top: 1px solid var(--hairline);
+}
+
+/* =========================================================
+   Empty states
+   ========================================================= */
+
+.empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+
+    padding: 34px 20px;
+
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+
+    color: var(--ink-2);
+    text-align: center;
+}
+
+.empty .icon {
+    width: 21px;
+    height: 21px;
+    color: var(--ink-muted);
+}
+
+.empty p {
+    margin: 0;
+    font-size: 13.5px;
+}
+
+/* =========================================================
+   Responsive
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+    .overview {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 560px) {
+
+    .hero-figure {
+        font-size: 38px;
+    }
+
+    .tiles {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .field-row {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .txn-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    * {
+        transition: none !important;
+        animation: none !important;
+    }
+
+    .budget-card:hover {
+        transform: none;
+    }
+}
