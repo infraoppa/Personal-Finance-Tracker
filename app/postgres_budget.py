@@ -102,7 +102,6 @@ def delete_budget(
     try:
         db.delete(budget)
         db.commit()
-
         return budget
 
     except Exception:
