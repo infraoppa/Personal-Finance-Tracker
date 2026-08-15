@@ -26,6 +26,7 @@ services:
     - "8000:8000"
     environment:
       DATABASE_URL: postgresql+psycopg://finance_user:finance_password@db:5432/finance
+      APP_TITLE: Personal Finance Tracker
 
     depends_on:
       db:
