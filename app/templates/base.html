@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+
+    <title>{% block title %}{{ app_title }}{% endblock %}</title>
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', path='styles.css') }}?v={{ static_version() }}"
+    >
+
+    <script>
+        /* Apply the saved theme before first paint so the
+           page never flashes the wrong background. */
+        (function () {
+            try {
+                var saved = localStorage.getItem("theme");
+
+                if (saved === "light" || saved === "dark") {
+                    document.documentElement.setAttribute(
+                        "data-theme",
+                        saved
+                    );
+                }
+            } catch (err) {
+                /* Private mode - fall back to the OS setting. */
+            }
+        })();
+    </script>
+</head>
+
+<body>
+
+    <!-- Icon sprite. Inline so the pages stay dependency
+         free - no icon font, no external requests. -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+
+        <symbol id="i-wallet" viewBox="0 0 24 24">
+            <path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H18a2 2 0 0 1 2 2v1"/>
+            <path d="M3 7.5V17a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-3"/>
+            <path d="M20 10.5h-4a1.75 1.75 0 0 0 0 3.5h4z"/>
+        </symbol>
+
+        <symbol id="i-moon" viewBox="0 0 24 24">
+            <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+        </symbol>
+
+        <symbol id="i-sun" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+        </symbol>
+
+        <symbol id="i-target" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9"/>
+            <circle cx="12" cy="12" r="5"/>
+            <circle cx="12" cy="12" r="1.2"/>
+        </symbol>
+
+        <symbol id="i-trend" viewBox="0 0 24 24">
+            <path d="M3 17l6-6 4 4 8-8"/>
+            <path d="M14 7h7v7"/>
+        </symbol>
+
+        <symbol id="i-receipt" viewBox="0 0 24 24">
+            <path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/>
+            <path d="M9.5 8h5M9.5 12h5"/>
+        </symbol>
+
+        <symbol id="i-alert" viewBox="0 0 24 24">
+            <path d="M10.3 4.3 2.8 17a2 2 0 0 0 1.7 3h15a2 2 0 0 0 1.7-3L13.7 4.3a2 2 0 0 0-3.4 0z"/>
+            <path d="M12 9v4M12 17h.01"/>
+        </symbol>
+
+        <symbol id="i-over" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 7.5v5M12 16h.01"/>
+        </symbol>
+
+        <symbol id="i-check" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M8.3 12.3l2.5 2.5 4.9-5.4"/>
+        </symbol>
+
+        <symbol id="i-edit" viewBox="0 0 24 24">
+            <path d="M4 20h4L18.5 9.5a2.6 2.6 0 0 0-3.7-3.7L4 16.3z"/>
+        </symbol>
+
+        <symbol id="i-trash" viewBox="0 0 24 24">
+            <path d="M4 7h16M9.5 7V5.2a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1V7"/>
+            <path d="M6.5 7l.9 12.1a1 1 0 0 0 1 .9h7.2a1 1 0 0 0 1-.9L17.5 7"/>
+        </symbol>
+
+        <symbol id="i-plus" viewBox="0 0 24 24">
+            <path d="M12 5v14M5 12h14"/>
+        </symbol>
+
+        <symbol id="i-inbox" viewBox="0 0 24 24">
+            <path d="M3 13h4.5l1.7 3h5.6l1.7-3H21"/>
+            <path d="M5.5 5h13l2.5 8v4.5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V13z"/>
+        </symbol>
+
+        <symbol id="i-back" viewBox="0 0 24 24">
+            <path d="M19 12H5M11 18l-6-6 6-6"/>
+        </symbol>
+
+    </svg>
+
+
+    <header class="topbar">
+
+        <div class="shell">
+
+            <a class="brand" href="/dashboard">
+
+                <span class="brand-mark">
+                    <svg class="icon"><use href="#i-wallet"/></svg>
+                </span>
+
+                {{ app_title }}
+
+            </a>
+
+            <button
+                type="button"
+                class="theme-toggle"
+                aria-label="Toggle dark mode"
+            >
+                <svg class="icon icon-moon"><use href="#i-moon"/></svg>
+                <svg class="icon icon-sun"><use href="#i-sun"/></svg>
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <main>
+        <div class="shell">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+
+    <script>
+        document
+            .querySelector(".theme-toggle")
+            .addEventListener("click", function () {
+                var root = document.documentElement;
+                var current = root.getAttribute("data-theme");
+
+                if (!current) {
+                    current = window.matchMedia(
+                        "(prefers-color-scheme: dark)"
+                    ).matches ? "dark" : "light";
+                }
+
+                var next = current === "dark" ? "light" : "dark";
+
+                root.setAttribute("data-theme", next);
+
+                try {
+                    localStorage.setItem("theme", next);
+                } catch (err) {
+                    /* Nothing to persist to - the toggle still
+                       works for this page view. */
+                }
+            });
+    </script>
+
+</body>
+</html>

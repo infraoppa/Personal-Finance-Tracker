@@ -58,3 +58,53 @@ def get_budget_status(db: Session,category: str,month: int,year: int):
         "alert_threshold": budget.alert_threshold,
         "threshold_reached": threshold_reached
     }
+
+def update_budget(
+    db: Session,
+    budget_id: int,
+    category: str,
+    amount: Decimal,
+    month: int,
+    year: int,
+    alert_threshold: int
+):
+    budget = db.get(Budget, budget_id)
+
+    if budget is None:
+        return None
+
+    try:
+        budget.category = category
+        budget.amount = amount
+        budget.month = month
+        budget.year = year
+        budget.alert_threshold = alert_threshold
+
+        db.commit()
+        db.refresh(budget)
+
+        return budget
+
+    except Exception:
+        db.rollback()
+        raise
+
+
+def delete_budget(
+    db: Session,
+    budget_id: int
+):
+    budget = db.get(Budget, budget_id)
+
+    if budget is None:
+        return None
+
+    try:
+        db.delete(budget)
+        db.commit()
+
+        return budget
+
+    except Exception:
+        db.rollback()
+        raise
